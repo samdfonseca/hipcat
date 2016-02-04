@@ -7,6 +7,12 @@ HipCat is a simple commandline utility to post snippets to HipChat.
 
 ## Quickstart
 
+### Install
+
+```bash
+go get github.com/samdfonseca/hipcat
+```
+
 ### Configuration
 
 Generate a personal access token for HipCat: https://hipchat.com/account/api
