@@ -104,27 +104,9 @@ func main() {
 			if config.defaultRoomId == "" && config.defaultRoomName == "" {
 				exitErr(fmt.Errorf("'room' flag is required if default_room_id is unset"))
 			}
-			output("no roomName, using defaultRoomName")
 			roomName = config.defaultRoomName
-			output("no roomId, using defaultRoomId")
 			roomId = config.defaultRoomId
 		}
-//		if roomName != "" || roomId != "" {
-//
-//			if roomName != "" {
-//				output("roomName nonempty string, ignoring defaultRoomName")
-//			} else if roomId == "" {
-//				output("roomName empty string, using defaultRoomName")
-//				roomName = config.defaultRoomName
-//			}
-//			if roomId != "" {
-//				output("roomId nonempty string, ignoring defaultRoomId")
-//				config.defaultRoomId = ""
-//			} else {
-//				output("roomId empty string, using defaultRoomId")
-//				roomId = config.defaultRoomId
-//			}
-//		}
 
 
 		if !c.Bool("stream") && c.Bool("plain") {
@@ -134,7 +116,6 @@ func main() {
 		hipcat, err := newHipCat(config.authToken, roomId, roomName)
 		failOnError(err, "HipChat API Error", true)
 
-		output(fmt.Sprintf("HipChat room id: %s", hipcat.roomId))
 		if len(c.Args()) > 0 {
 			if c.Bool("stream") {
 				output("filepath provided, ignoring stream option")
