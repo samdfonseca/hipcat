@@ -1,45 +1,29 @@
 # Configuration Guide
-Slackcat may be configured via a simple or advanced configuration
+HipChatcat may be configured via a simple or advanced configuration
 
-## Simple Configuration
+## Configuration
 
-Generate a new Slack token with:
+#### Example ~/.hipcat Config
 ```bash
-slackcat --configure
-```
-A new browser window will be opened for you to confirm the request via Slack, and you'll be returned a token.
-
-Create a Slackcat config file and you're ready to go!
-```bash
-echo '<your-slack-token>' > ~/.slackcat
-```
-
-## Advanced Configuration
-
-Advanced configuration allows for multiple Slack teams, a default team and default channel
-
-#### Example ~/.slackcat Config
-```bash
-team1 = <team1-slack-token>
-team2 = <team2-slack-token>
-default_team = team1
-default_channel = general
+auth_token = thisisadefinitelyafaketoken
+default_room = Department of Cool New Shiz
 ```
 By default, all messages will be sent to the team1 general channel.
 
 #### Example Usage
 
-Post a file to team1 #general channel:
+Post a file to default room:
 ```bash
-slackcat /path/to/file.txt
+hipcat /path/to/file.txt
 ```
 
-Post a file to team1 #testing channel:
+Post a file to room by name:
 ```bash
-slackcat -c testing /path/to/file.txt
+hipcat -r "Notification Black Hole Room" /path/to/file.txt
 ```
 
-Post a file to team2 #testing channel:
+Post a file to room by room id:
+(slightly faster since it saves one request to the HipChat api to lookup the room id)
 ```bash
-slackcat -c team2:testing /path/to/file.txt
+hipcat -i 1234567 /path/to/file.txt
 ```

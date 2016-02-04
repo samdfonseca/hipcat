@@ -1,0 +1,10 @@
+package: .
+import:
+- package: github.com/codegangsta/cli
+- package: github.com/fatih/color
+- package: github.com/skratchdot/open-golang
+  subpackages:
+  - /open
+- package: github.com/tbruyelle/hipchat-go
+  subpackages:
+  - /hipchat

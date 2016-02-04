@@ -6,19 +6,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/skratchdot/open-golang/open"
-)
-
-const (
-	base_url  = "https://slack.com/oauth/authorize"
-	client_id = "7065709201.17699618306"
-	scope     = "channels%3Aread+groups%3Aread+im%3Aread+users%3Aread+chat%3Awrite%3Auser+files%3Awrite%3Auser"
+	"log"
 )
 
 type Config struct {
-	teams          map[string]string
-	defaultTeam    string
-	defaultChannel string
+	authToken     string
+	defaultRoomId string
+	defaultRoomName	string
+	test          bool
 }
 
 func getConfigPath() string {
@@ -26,16 +21,16 @@ func getConfigPath() string {
 	if homedir == "" {
 		exitErr(fmt.Errorf("$HOME not set"))
 	}
-	return homedir + "/.slackcat"
+	return homedir + "/.hipcat"
 }
 
 func (c *Config) parseChannelOpt(channel string) (string, string, error) {
 	//use default channel if none provided
 	if channel == "" {
-		if c.defaultChannel == "" {
-			return "", "", fmt.Errorf("no channel provided!")
+		if c.defaultRoomId == "" {
+			return "", "", fmt.Errorf("No hipchat access token found. Create one at https://www.hipchat.com/account/api")
 		} else {
-			return c.defaultTeam, c.defaultChannel, nil
+			return c.defaultRoomId, "", nil
 		}
 	}
 	//if channel is prefixed with a team
@@ -44,38 +39,45 @@ func (c *Config) parseChannelOpt(channel string) (string, string, error) {
 		return s[0], s[1], nil
 	}
 	//use default team with provided channel
-	return c.defaultTeam, channel, nil
+	return c.defaultRoomId, channel, nil
 }
 
 func readConfig() *Config {
 	config := &Config{
-		teams:          make(map[string]string),
-		defaultTeam:    "",
-		defaultChannel: "",
+		authToken:     "",
+		defaultRoomId: "",
+		test:          false,
 	}
 	lines := readLines(getConfigPath())
-
-	if len(lines) == 1 {
-		config.teams["default"] = lines[0]
-		config.defaultTeam = "default"
-		return config
-	}
 
 	for _, line := range lines {
 		s := strings.Split(line, "=")
 		if len(s) != 2 {
-			exitErr(fmt.Errorf("failed to parse config at: %s", line))
+			exitErr(fmt.Errorf("failed to parse config at: %s\n", line))
 		}
 		key := strip(s[0])
 		switch key {
-		case "default_team":
-			config.defaultTeam = strip(s[1])
-		case "default_channel":
-			config.defaultChannel = strip(s[1])
+		case "auth_token":
+			config.authToken = strip(s[1])
+		case "default_room_name":
+			config.defaultRoomName = strip(s[1])
+		case "default_room_id":
+			config.defaultRoomId = strip(s[1])
+		case "test":
+			if strip(s[1]) == "true" {
+				config.test = true
+			} else if strip(s[1]) == "false" {
+				config.test = false
+			} else {
+				output(fmt.Sprintf("unrecognized value for 'test' in config: %s\n", strip(s[1])))
+				log.Println("")
+
+			}
 		default:
-			config.teams[key] = strip(s[1])
+			output(fmt.Sprintf("unrecognized config parameter: %s\n", line))
 		}
 	}
+
 	return config
 }
 
@@ -97,14 +99,4 @@ func readLines(path string) []string {
 		}
 	}
 	return lines
-}
-
-func configureOA() {
-	oa_url := base_url + "?scope=" + scope + "&client_id=" + client_id
-	output("Creating token request for Slackcat")
-	err := open.Run(oa_url)
-	if err != nil {
-		output("Please open the below URL in your browser to authorize SlackCat")
-		output(oa_url)
-	}
 }

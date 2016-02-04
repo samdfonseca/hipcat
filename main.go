@@ -26,7 +26,7 @@ func readIn(lines chan string, tee bool) {
 }
 
 func writeTemp(lines chan string) string {
-	tmp, err := ioutil.TempFile(os.TempDir(), "slackcat-")
+	tmp, err := ioutil.TempFile(os.TempDir(), "hipcat-")
 	failOnError(err, "unable to create tmpfile", false)
 
 	w := bufio.NewWriter(tmp)
@@ -40,7 +40,7 @@ func writeTemp(lines chan string) string {
 
 func output(s string) {
 	bold := color.New(color.Bold).SprintFunc()
-	fmt.Printf("%s %s\n", bold("slackcat"), s)
+	fmt.Printf("%s %s\n", bold("hipcat"), s)
 }
 
 func failOnError(err error, msg string, appendErr bool) {
@@ -60,8 +60,8 @@ func exitErr(err error) {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "slackcat"
-	app.Usage = "redirect a file to slack"
+	app.Name = "hipcat"
+	app.Usage = "redirect a file to hipchat"
 	app.Version = version
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -70,7 +70,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "stream, s",
-			Usage: "Stream messages to Slack continuously instead of uploading a single snippet",
+			Usage: "Stream messages to HipChat continuously instead of uploading a single snippet",
 		},
 		cli.BoolFlag{
 			Name:  "plain, p",
@@ -78,15 +78,15 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "noop",
-			Usage: "Skip posting file to Slack. Useful for testing",
-		},
-		cli.BoolFlag{
-			Name:  "configure",
-			Usage: "Configure Slackcat via oauth",
+			Usage: "Skip posting file to HipChat. Useful for testing",
 		},
 		cli.StringFlag{
-			Name:  "channel, c",
-			Usage: "Slack channel or group to post to",
+			Name:  "room, r",
+			Usage: "HipChat room to post to",
+		},
+		cli.StringFlag{
+			Name: "roomid, i",
+			Usage: "HipChat room id to post to",
 		},
 		cli.StringFlag{
 			Name:  "filename, n",
@@ -95,28 +95,46 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) {
-		if c.Bool("configure") {
-			configureOA()
-			os.Exit(0)
-		}
 
 		config := readConfig()
 		fileName := c.String("filename")
-		team, channel, err := config.parseChannelOpt(c.String("channel"))
-		failOnError(err, "", true)
-
-		token := config.teams[team]
-		if token == "" {
-			exitErr(fmt.Errorf("no such team: %s", team))
+		roomName := c.String("room")
+		roomId := c.String("roomid")
+		if roomName == "" && roomId == "" {
+			if config.defaultRoomId == "" && config.defaultRoomName == "" {
+				exitErr(fmt.Errorf("'room' flag is required if default_room_id is unset"))
+			}
+			output("no roomName, using defaultRoomName")
+			roomName = config.defaultRoomName
+			output("no roomId, using defaultRoomId")
+			roomId = config.defaultRoomId
 		}
+//		if roomName != "" || roomId != "" {
+//
+//			if roomName != "" {
+//				output("roomName nonempty string, ignoring defaultRoomName")
+//			} else if roomId == "" {
+//				output("roomName empty string, using defaultRoomName")
+//				roomName = config.defaultRoomName
+//			}
+//			if roomId != "" {
+//				output("roomId nonempty string, ignoring defaultRoomId")
+//				config.defaultRoomId = ""
+//			} else {
+//				output("roomId empty string, using defaultRoomId")
+//				roomId = config.defaultRoomId
+//			}
+//		}
+
 
 		if !c.Bool("stream") && c.Bool("plain") {
 			exitErr(fmt.Errorf("'plain' flag requires 'stream' mode!"))
 		}
 
-		slackcat, err := newSlackCat(token, channel)
-		failOnError(err, "Slack API Error", true)
+		hipcat, err := newHipCat(config.authToken, roomId, roomName)
+		failOnError(err, "HipChat API Error", true)
 
+		output(fmt.Sprintf("HipChat room id: %s", hipcat.roomId))
 		if len(c.Args()) > 0 {
 			if c.Bool("stream") {
 				output("filepath provided, ignoring stream option")
@@ -125,7 +143,7 @@ func main() {
 			if fileName == "" {
 				fileName = filepath.Base(filePath)
 			}
-			slackcat.postFile(filePath, fileName, c.Bool("noop"))
+			hipcat.postFile(filePath, fileName, c.Bool("noop"))
 			os.Exit(0)
 		}
 
@@ -134,14 +152,14 @@ func main() {
 
 		if c.Bool("stream") {
 			output("starting stream")
-			go slackcat.addToStreamQ(lines)
-			go slackcat.processStreamQ(c.Bool("noop"), c.Bool("plain"))
-			go slackcat.trap()
+			go hipcat.addToStreamQ(lines)
+			go hipcat.processStreamQ(c.Bool("noop"), c.Bool("plain"))
+			go hipcat.trap()
 			select {}
 		} else {
 			filePath := writeTemp(lines)
 			defer os.Remove(filePath)
-			slackcat.postFile(filePath, fileName, c.Bool("noop"))
+			hipcat.postFile(filePath, fileName, c.Bool("noop"))
 			os.Exit(0)
 		}
 	}

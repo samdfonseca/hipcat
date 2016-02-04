@@ -1,68 +1,54 @@
-# slackcat
-Slackcat is a simple commandline utility to post snippets to Slack.
+# hipcat
+HipCat is a simple commandline utility to post snippets to HipChat.
 
 
-  <img width="500px" src="https://raw.githubusercontent.com/vektorlab/slackcat/master/demo.gif" alt="slackcat"/>
+  <img width="500px" src="https://raw.githubusercontent.com/samdfonseca/hipcat/master/demo.gif" alt="hipcat"/>
 
 
 ## Quickstart
 
-### Installing
-Download the latest release for your platform:
-
-#### OS X
-
-```brew
-brew install slackcat
-```
-or
-```bash
-curl -Lo slackcat https://github.com/vektorlab/slackcat/releases/download/v0.9/slackcat-0.9-darwin-amd64
-sudo mv slackcat /usr/local/bin/
-sudo chmod +x /usr/local/bin/slackcat
-```
-
-#### Linux
-
-```bash
-wget https://github.com/vektorlab/slackcat/releases/download/v0.9/slackcat-0.9-linux-amd64 -O slackcat
-sudo mv slackcat /usr/local/bin/
-sudo chmod +x /usr/local/bin/slackcat
-```
-
 ### Configuration
 
-Generate a new Slack token with:
-```bash
-slackcat --configure
-```
-A new browser window will be opened for you to confirm the request via Slack, and you'll be returned a token.
+Generate a personal access token for HipCat: https://hipchat.com/account/api
 
-Create a Slackcat config file and you're ready to go!
+Create a HipCat config file:
 ```bash
-echo '<your-slack-token>' > ~/.slackcat
+echo "auth_token = <your-hipchat-token>" >> ~/.hipcat
 ```
 
-For configuring multiple teams and default channels, see [Configuration Guide](https://github.com/vektorlab/slackcat/blob/master/docs/configuration-guide.md).
+Set a default room to send to:
+```bash
+echo "default_room_name = Notification Room" >> ~/.hipcat
+OR
+echo "default_room_id = 1234567" >> ~/.hipcat
+```
+(Room ID is slightly faster since it saves one request to the HipChat API to lookup the room id)
 
 ## Usage
-Pipe command output as a text snippet:
+Pipe command output as a message or several messages to the default room:
 ```bash
-$ echo -e "hi\nthere" | slackcat --channel general --filename hello
-*slackcat* file hello uploaded to general
+$ tail -F -n0 /path/to/log | hipcat --tee --stream
+hipcat file hello uploaded to Notification Room
+```
+
+Pipe command output as a message or several messages to some other room:
+```bash
+$ tail -F -n0 /path/to/log | hipcat --stream -r "Notification Room"
+hipcat starting stream
+hipcat posted 10 message lines to Notification Room
 ```
 
 Post an existing file:
 ```bash
-$ slackcat --channel general /home/user/bot.png
-*slackcat* file bot.png uploaded to general
+$ hipcat --room "Entire Company" /home/user/bot.png
+hipcat file bot.png uploaded to general
 ```
 
-Stream input continously as a formatted message:
+Stream input continously as a formatted message, and print stdin back to stdout:
 ```bash
-$ tail -F -n0 /path/to/log | slackcat --channel general --stream
-*slackcat* posted 5 message lines to general
-*slackcat* posted 2 message lines to general
+$ tail -F -n0 /path/to/log | hipcat --tee --stream
+*hipcat* posted 5 message lines to general
+*hipcat* posted 2 message lines to general
 ...
 ```
 
@@ -71,9 +57,8 @@ $ tail -F -n0 /path/to/log | slackcat --channel general --stream
 Option | Description
 --- | ---
 --tee, -t | Print stdin to screen before posting
---stream, -s | Stream messages to Slack continuously instead of uploading a single snippet
+--stream, -s | Stream messages to HipChat continuously instead of uploading a single snippet
 --plain, -p | When streaming, write messages as plain text instead of code blocks
---noop | Skip posting file to Slack. Useful for testing
---configure | Configure Slackcat via oauth
---channel, -c | Slack channel, group, or user to post to
+--noop | Skip posting file to HipChat. Useful for testing
+--room, -r | HipChat channel, group, or user to post to
 --filename, -n | Filename for upload. Defaults to given filename or current timestamp if reading from stdin.
