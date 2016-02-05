@@ -52,10 +52,19 @@ hipcat file bot.png uploaded to general
 
 Stream input continously as a formatted message, and print stdin back to stdout:
 ```bash
-$ tail -F -n0 /path/to/log | hipcat --tee --stream
-*hipcat* posted 5 message lines to general
-*hipcat* posted 2 message lines to general
-...
+curl https://google.com | hipcat --tee --stream
+hipcat starting stream
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   220  100   220    0     0   1252      0 --:--:-- --:--:-- --:--:--  1257
+<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+<TITLE>301 Moved</TITLE></HEAD><BODY>
+<H1>301 Moved</H1>
+The document has moved
+<A HREF="https://www.google.com/">here</A>.
+</BODY></HTML>
+hipcat flushing remaining messages to HipChat...
+hipcat posted 6 message lines to TitaniumHipTest
 ```
 
 ## Options
