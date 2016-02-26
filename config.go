@@ -24,24 +24,6 @@ func getConfigPath() string {
 	return homedir + "/.hipcat"
 }
 
-func (c *Config) parseChannelOpt(channel string) (string, string, error) {
-	//use default channel if none provided
-	if channel == "" {
-		if c.defaultRoomId == "" {
-			return "", "", fmt.Errorf("No hipchat access token found. Create one at https://www.hipchat.com/account/api")
-		} else {
-			return c.defaultRoomId, "", nil
-		}
-	}
-	//if channel is prefixed with a team
-	if strings.Contains(channel, ":") {
-		s := strings.Split(channel, ":")
-		return s[0], s[1], nil
-	}
-	//use default team with provided channel
-	return c.defaultRoomId, channel, nil
-}
-
 func readConfig() *Config {
 	config := &Config{
 		authToken:     "",
